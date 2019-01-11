@@ -453,7 +453,7 @@ int _print_admin_priority(priority_factors_object_t * job, int width,
 	if (job == NULL)	/* Print the Header instead */
 		_print_str("ADMIN", width, right, true);
 	else if (job == (priority_factors_object_t *) -1)
-		_print_int(weight_admin, width, right, true);
+		_print_int(1, width, right, true);
 	else
 		_print_int(job->priority_admin, width, right, true);
 	if (suffix)
