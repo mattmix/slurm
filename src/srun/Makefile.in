@@ -894,7 +894,7 @@ install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-exec-local
+install-exec-am: install-binPROGRAMS
 
 install-html: install-html-recursive
 
@@ -947,14 +947,14 @@ uninstall-am: uninstall-binPROGRAMS
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
 	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-exec-local install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
@@ -962,16 +962,6 @@ uninstall-am: uninstall-binPROGRAMS
 force:
 $(srun_DEPENDENCIES) : force
 	@cd `dirname $@` && $(MAKE) `basename $@`
-
-install-exec-local:
-	umask 022; \
-	if [ -x /usr/lib/rpm/debugedit ]; then \
-	  srcdir=`cd $(top_srcdir) && pwd`; \
-	  /usr/lib/rpm/debugedit -b $$srcdir -d $(pkglibdir) \
-	                         $(DESTDIR)$(bindir)/srun; fi; \
-	mkdir -p -m 755 $(DESTDIR)$(pkglibdir)/src/srun
-	$(INSTALL) -m 644 $(top_srcdir)/src/srun/srun.wrapper.c \
-		$(DESTDIR)$(pkglibdir)/src/srun/srun.wrapper.c
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

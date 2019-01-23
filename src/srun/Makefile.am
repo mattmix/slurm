@@ -26,14 +26,3 @@ srun_LDFLAGS = -export-dynamic $(CMD_LDFLAGS)
 force:
 $(srun_DEPENDENCIES) : force
 	@cd `dirname $@` && $(MAKE) `basename $@`
-
-install-exec-local:
-	umask 022; \
-	if [ -x /usr/lib/rpm/debugedit ]; then \
-	  srcdir=`cd $(top_srcdir) && pwd`; \
-	  /usr/lib/rpm/debugedit -b $$srcdir -d $(pkglibdir) \
-	                         $(DESTDIR)$(bindir)/srun; fi; \
-	mkdir -p -m 755 $(DESTDIR)$(pkglibdir)/src/srun
-	$(INSTALL) -m 644 $(top_srcdir)/src/srun/srun.wrapper.c \
-		$(DESTDIR)$(pkglibdir)/src/srun/srun.wrapper.c
-
