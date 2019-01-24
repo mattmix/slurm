@@ -474,6 +474,7 @@ static struct job_record *_create_job_record(uint32_t num_jobs)
 	detail_ptr = (struct job_details *)xmalloc(sizeof(struct job_details));
 
 	job_ptr->magic = JOB_MAGIC;
+	job_ptr->admin_prio_factor = NICE_OFFSET;
 	job_ptr->array_task_id = NO_VAL;
 	job_ptr->details = detail_ptr;
 	job_ptr->prio_factors = xmalloc(sizeof(priority_factors_object_t));
@@ -1297,7 +1298,7 @@ static int _load_job_state(Buf buffer, uint16_t protocol_version)
 	uint32_t resv_id, spank_job_env_size = 0, qos_id, derived_ec = 0;
 	uint32_t array_job_id = 0, req_switch = 0, wait4switch = 0;
 	uint32_t profile = ACCT_GATHER_PROFILE_NOT_SET, db_flags = 0;
-	uint32_t job_state, delay_boot = 0, admin_prio_factor = 0;
+	uint32_t job_state, delay_boot = 0, admin_prio_factor = NICE_OFFSET;
 	time_t start_time, end_time, end_time_exp, suspend_time,
 		pre_sus_time, tot_sus_time;
 	time_t preempt_time = 0, deadline = 0;
@@ -6966,6 +6967,10 @@ static int _job_create(job_desc_msg_t *job_desc, int allocate, int will_run,
 		job_ptr->direct_set_prio = 1;
 	}
 
+	/*
+	 * The job submit plugin sets admin_prio_factor to NO_VAL so that it can
+	 * only be set the by the job submit plugin at submission.
+	 */
 	if (job_desc->admin_prio_factor != NO_VAL)
 		job_ptr->admin_prio_factor = job_desc->admin_prio_factor;
 
@@ -8989,7 +8994,6 @@ static int _validate_job_desc(job_desc_msg_t * job_desc_msg, int allocate,
 			return ESLURM_DUPLICATE_JOB_ID;
 		}
 	}
-
 
 	if (job_desc_msg->nice == NO_VAL)
 		job_desc_msg->nice = NICE_OFFSET;

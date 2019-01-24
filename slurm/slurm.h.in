@@ -1691,7 +1691,7 @@ typedef struct priority_factors_object {
 	char *partition;
 	uint32_t user_id;
 
-	double	 priority_admin;
+	uint32_t priority_admin;
 	double	 priority_age;
 	double	 priority_fs;
 	double	 priority_js;

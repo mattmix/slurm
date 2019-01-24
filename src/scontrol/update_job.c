@@ -799,8 +799,15 @@ extern int scontrol_update_job(int argc, char **argv)
 		}
 		else if (xstrncasecmp(tag, "AdminPrioFactor",
 				      MAX(taglen, 6)) == 0) {
-			int priority = strtoll(val, (char **)NULL, 10);
-			job_msg.admin_prio_factor = priority;
+			long long tmp_prio;
+			tmp_prio = strtoll(val, (char **)NULL, 10);
+			if (llabs(tmp_prio) > (NICE_OFFSET - 3)) {
+				error("AdminPrioFactor value out of range (+/- %u). Value ignored",
+				      NICE_OFFSET - 3);
+				exit_code = 1;
+				return 0;
+			}
+			job_msg.admin_prio_factor = NICE_OFFSET + tmp_prio;
 			update_cnt++;
 		}
 		else if (xstrncasecmp(tag, "ArrayTaskThrottle",
