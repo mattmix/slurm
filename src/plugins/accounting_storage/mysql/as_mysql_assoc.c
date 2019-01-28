@@ -69,6 +69,7 @@ char *assoc_req_inx[] = {
 	"max_submit_jobs",
 	"max_wall_pj",
 	"parent_acct",
+	"priority",
 	"def_qos_id",
 	"qos",
 	"delta_qos",
@@ -99,6 +100,7 @@ enum {
 	ASSOC_REQ_MSJ,
 	ASSOC_REQ_MWPJ,
 	ASSOC_REQ_PARENT,
+	ASSOC_REQ_PRIO,
 	ASSOC_REQ_DEF_QOS,
 	ASSOC_REQ_QOS,
 	ASSOC_REQ_DELTA_QOS,
@@ -109,7 +111,7 @@ enum {
 static char *get_parent_limits_select =
 	"select @par_id, @mj, @mja, @mpt, @msj, "
 	"@mwpj, @mtpj, @mtpn, @mtmpj, @mtrm, "
-	"@def_qos_id, @qos, @delta_qos;";
+	"@def_qos_id, @qos, @delta_qos, @prio;";
 
 enum {
 	ASSOC2_REQ_PARENT_ID,
@@ -125,6 +127,7 @@ enum {
 	ASSOC2_REQ_DEF_QOS,
 	ASSOC2_REQ_QOS,
 	ASSOC2_REQ_DELTA_QOS,
+	ASSOC2_REQ_PRIO,
 };
 
 static char *aassoc_req_inx[] = {
@@ -1470,6 +1473,10 @@ static int _process_modify_assoc_results(mysql_conn_t *mysql_conn,
 				    && row2[ASSOC2_REQ_MWPJ])
 					alt_assoc.max_wall_pj = slurm_atoul(
 						row2[ASSOC2_REQ_MWPJ]);
+				if ((assoc->priority == INFINITE)
+				    && row2[ASSOC2_REQ_PRIO])
+					alt_assoc.priority = slurm_atoul(
+						row2[ASSOC2_REQ_PRIO]);
 
 				/* We don't have to copy these strings
 				 * or check for there existance,
@@ -1560,6 +1567,10 @@ static int _process_modify_assoc_results(mysql_conn_t *mysql_conn,
 			mod_assoc->max_wall_pj = alt_assoc.max_wall_pj;
 		else
 			mod_assoc->max_wall_pj = assoc->max_wall_pj;
+		if (alt_assoc.priority != NO_VAL)
+			mod_assoc->priority = alt_assoc.priority;
+		else
+			mod_assoc->priority = assoc->priority;
 
 		/* no need to get the parent id since if we moved
 		 * parent id's we will get it when we send the total list */
@@ -1893,6 +1904,7 @@ static int _cluster_get_assocs(mysql_conn_t *mysql_conn,
 	uint32_t parent_mpt = INFINITE;
 	uint32_t parent_msj = INFINITE;
 	uint32_t parent_mwpj = INFINITE;
+	uint32_t parent_prio = INFINITE;
 	char *parent_mtpj = NULL;
 	char *parent_mtpn = NULL;
 	char *parent_mtmpj = NULL;
@@ -2132,6 +2144,13 @@ static int _cluster_get_assocs(mysql_conn_t *mysql_conn,
 				else
 					parent_mwpj = INFINITE;
 
+
+				if (row2[ASSOC2_REQ_PRIO])
+					parent_prio = slurm_atoul(
+						row2[ASSOC2_REQ_PRIO]);
+				else
+					parent_prio = INFINITE;
+
 				xfree(parent_mtpj);
 				if (row2[ASSOC2_REQ_MTPJ][0])
 					parent_mtpj = xstrdup(
@@ -2200,6 +2219,11 @@ static int _cluster_get_assocs(mysql_conn_t *mysql_conn,
 			assoc->max_wall_pj = slurm_atoul(row[ASSOC_REQ_MWPJ]);
 		else
 			assoc->max_wall_pj = parent_mwpj;
+
+		if (row[ASSOC_REQ_PRIO])
+			assoc->priority = slurm_atoul(row[ASSOC_REQ_PRIO]);
+		else
+			assoc->priority = parent_prio;
 
 		if (row[ASSOC_REQ_MTPJ][0])
 			assoc->max_tres_pj = xstrdup(row[ASSOC_REQ_MTPJ]);

@@ -8,6 +8,7 @@
 <LI> <a href=#mfjppintro>Multi-factor Job Priority Plugin</a>
 <LI> <a href=#general>Job Priority Factors In General</a>
 <LI> <a href=#age>Age Factor</a>
+<LI> <a href=#assoc>Association Factor</a>
 <LI> <a href=#jobsize>Job Size Factor</a>
 <LI> <a href=#partition>Partition Factor</a>
 <LI> <a href=#qos>Quality of Service (QOS) Factor</a>
@@ -32,11 +33,13 @@
 <a name=mfjppintro>
 <h2>Multi-factor 'Factors'</h2></a>
 
-<P> There are six factors in the Multi-factor Job Priority plugin that influence job priority:</P>
+<P> There are seven factors in the Multi-factor Job Priority plugin that influence job priority:</P>
 
 <DL>
 <DT> Age
 <DD> the length of time a job has been waiting in the queue, eligible to be scheduled
+<DT> Association
+<DD> a factor associated with each association
 <DT> Fair-share
 <DD> the difference between the portion of the computing resource that has been promised and the amount of resources that has been consumed
 <DT> Job size
@@ -65,6 +68,7 @@ requested/allocated TRES Type in a given partition
 <PRE>
 Job_priority =
 	(PriorityWeightAge) * (age_factor) +
+	(PriorityWeightAssoc) * (assoc_factor) +
 	(PriorityWeightFairshare) * (fair-share_factor) +
 	(PriorityWeightJobSize) * (job_size_factor) +
 	(PriorityWeightPartition) * (partition_factor) +
@@ -99,6 +103,15 @@ Job_priority =
 <P> The age factor represents the length of time a job has been sitting in the queue and eligible to run.  In general, the longer a job waits in the queue, the larger its age factor grows.  However, the age factor for a dependent job will not change while it waits for the job it depends on to complete.  Also, the age factor will not change when scheduling is withheld for a job whose node or time limits exceed the cluster's current limits.</P>
 
 <P> At some configurable length of time (<i>PriorityMaxAge</i>), the age factor will max out to 1.0.</P>
+
+<a name=assoc>
+<h2>Association Factor</h2></a>
+
+<P> Each association can be assigned an integer priority. The larger the
+number, the greater the job priority will be for jobs that request
+this association. This priority value is normalized to the highest
+priority of all the association to become the association factor.</P>
+
 
 <!-------------------------------------------------------------------------->
 <a name=jobsize>
@@ -287,6 +300,8 @@ factor as it is currently configured.</P>
   days-hr).  The default value is 7-0 (7 days).
 <DT> PriorityWeightAge
 <DD> An unsigned integer that scales the contribution of the age factor.
+<DT> PriorityWeightAssoc
+<DD> An unsigned integer that scales the contribution of the association factor.
 <DT> PriorityWeightFairshare
 <DD> An unsigned integer that scales the contribution of the fair-share factor.
 <DT> PriorityWeightJobSize
