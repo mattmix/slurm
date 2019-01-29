@@ -91,6 +91,8 @@ HIGHLIGHTS
  -- Changed the default fair share algorithm to "fair tree". To disable this
     and revert to "classic" fair share you must set PriorityFlags=NO_FAIR_TREE.
  -- Add priorities to assocations.
+ -- Added NO_NORMAL_[ALL|ASSOC|PART|QOS|TRES] PriorityFlags to not normalize
+    associated factors.
 
 RPMBUILD CHANGES
 ================
