@@ -1079,10 +1079,6 @@ static void _set_options(int argc, char **argv)
 			}
 			break;
 		case LONG_OPT_GID:
-			if (getuid() != 0) {
-				error("--gid only permitted by root user");
-				exit(error_exit);
-			}
 			if (opt.egid != (gid_t) -1) {
 				error("duplicate --gid option");
 				exit(error_exit);

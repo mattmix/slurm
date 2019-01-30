@@ -1031,17 +1031,20 @@ static int _valid_id(char *caller, job_desc_msg_t *msg, uid_t uid)
 					       gid,
 					       user_name,
 					       &gids);
+		bool found = false;
 		for (int i = 0; i < ngids; i++) {
 			if (gids[i] == msg->group_id) {
-				goto found;
+				found = true;
+				break;
 			}
 		}
-		error("%s: User is not a member of requested GID=%u",
-		      caller, msg->group_id);
-		return ESLURM_GROUP_ID_MISSING;
-	found:
 		xfree(user_name);
 		xfree(gids);
+		if (!found) {
+			error("%s: User is not a member of requested GID=%u",
+			      caller, msg->group_id);
+			return ESLURM_GROUP_ID_MISSING;
+		}
 	}
 
 	return SLURM_SUCCESS;
