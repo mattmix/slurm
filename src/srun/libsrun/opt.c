@@ -1855,10 +1855,6 @@ static void _set_options(const int argc, char **argv)
 		case LONG_OPT_GID:
 			if (!optarg)
 				break;	/* Fix for Coverity false positive */
-			if (getuid() != 0) {
-				error("--gid only permitted by root user");
-				exit(error_exit);
-			}
 			if (opt.egid != (gid_t) -1) {
 				error("duplicate --gid option");
 				exit(error_exit);

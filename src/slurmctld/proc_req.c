@@ -1012,7 +1012,7 @@ extern bool validate_operator(uid_t uid)
 		return false;
 }
 
-static int _valid_id(char *caller, job_desc_msg_t *msg, uid_t uid, gid_t gid)
+static int _valid_id(char *caller, job_desc_msg_t *msg, uid_t uid)
 {
 	if (validate_slurm_user(uid))
 		return SLURM_SUCCESS;
@@ -1023,10 +1023,25 @@ static int _valid_id(char *caller, job_desc_msg_t *msg, uid_t uid, gid_t gid)
 		return ESLURM_USER_ID_MISSING;
 	}
 
+	gid_t gid = gid_from_uid(msg->user_id);
+	gid_t* gids;
 	if (gid != msg->group_id) {
-		error("%s: Requested GID=%u doesn't match user GID=%u.",
-		      caller, msg->group_id, gid);
+		char* user_name = uid_to_string_or_null(msg->user_id);
+		int ngids = group_cache_lookup(msg->user_id,
+					       gid,
+					       user_name,
+					       &gids);
+		for (int i = 0; i < ngids; i++) {
+			if (gids[i] == msg->group_id) {
+				goto found;
+			}
+		}
+		error("%s: User is not a member of requested GID=%u",
+		      caller, msg->group_id);
 		return ESLURM_GROUP_ID_MISSING;
+	found:
+		xfree(user_name);
+		xfree(gids);
 	}
 
 	return SLURM_SUCCESS;
@@ -1300,8 +1315,6 @@ static void _slurm_rpc_allocate_pack(slurm_msg_t * msg)
 		READ_LOCK, WRITE_LOCK, WRITE_LOCK, READ_LOCK, READ_LOCK };
 	uid_t uid = g_slurm_auth_get_uid(msg->auth_cred,
 					 slurmctld_config.auth_info);
-	gid_t gid = g_slurm_auth_get_gid(msg->auth_cred,
-					 slurmctld_config.auth_info);
 	char *hostname = g_slurm_auth_get_host(msg->auth_cred,
 					       slurmctld_config.auth_info);
 	uint32_t job_uid = NO_VAL;
@@ -1364,7 +1377,7 @@ static void _slurm_rpc_allocate_pack(slurm_msg_t * msg)
 			job_uid = job_desc_msg->user_id;
 
 		if ((error_code = _valid_id("REQUEST_JOB_PACK_ALLOCATION",
-					    job_desc_msg, uid, gid))) {
+					    job_desc_msg, uid))) {
 			break;
 		}
 
@@ -1542,8 +1555,6 @@ static void _slurm_rpc_allocate_resources(slurm_msg_t * msg)
 		READ_LOCK, WRITE_LOCK, WRITE_LOCK, READ_LOCK, READ_LOCK };
 	uid_t uid = g_slurm_auth_get_uid(msg->auth_cred,
 					 slurmctld_config.auth_info);
-	gid_t gid = g_slurm_auth_get_gid(msg->auth_cred,
-					 slurmctld_config.auth_info);
 	char *hostname = g_slurm_auth_get_host(msg->auth_cred,
 					       slurmctld_config.auth_info);
 	int immediate = job_desc_msg->immediate;
@@ -1564,7 +1575,7 @@ static void _slurm_rpc_allocate_resources(slurm_msg_t * msg)
 	}
 
 	if ((error_code = _valid_id("REQUEST_RESOURCE_ALLOCATION",
-				    job_desc_msg, uid, gid))) {
+				    job_desc_msg, uid))) {
 		reject_job = true;
 		goto send_msg;
 	}
@@ -2920,8 +2931,6 @@ static void _slurm_rpc_job_will_run(slurm_msg_t * msg)
 		READ_LOCK, WRITE_LOCK, WRITE_LOCK, READ_LOCK, READ_LOCK };
 	uid_t uid = g_slurm_auth_get_uid(msg->auth_cred,
 					 slurmctld_config.auth_info);
-	gid_t gid = g_slurm_auth_get_gid(msg->auth_cred,
-					 slurmctld_config.auth_info);
 	char *hostname = g_slurm_auth_get_host(msg->auth_cred,
 					       slurmctld_config.auth_info);
 	uint16_t port;	/* dummy value */
@@ -2940,7 +2949,7 @@ static void _slurm_rpc_job_will_run(slurm_msg_t * msg)
 
 	/* do RPC call */
 	if ((error_code = _valid_id("REQUEST_JOB_WILL_RUN",
-				    job_desc_msg, uid, gid)))
+				    job_desc_msg, uid)))
 		goto send_reply;
 
 
@@ -3987,8 +3996,6 @@ static void _slurm_rpc_submit_batch_job(slurm_msg_t *msg)
 		READ_LOCK, WRITE_LOCK, WRITE_LOCK, READ_LOCK, READ_LOCK };
 	uid_t uid = g_slurm_auth_get_uid(msg->auth_cred,
 					 slurmctld_config.auth_info);
-	gid_t gid = g_slurm_auth_get_gid(msg->auth_cred,
-					 slurmctld_config.auth_info);
 	char *hostname = g_slurm_auth_get_host(msg->auth_cred,
 					       slurmctld_config.auth_info);
 	char *err_msg = NULL, *job_submit_user_msg = NULL;
@@ -4004,7 +4011,7 @@ static void _slurm_rpc_submit_batch_job(slurm_msg_t *msg)
 	}
 
 	if ((error_code = _valid_id("REQUEST_SUBMIT_BATCH_JOB",
-				    job_desc_msg, uid, gid))) {
+				    job_desc_msg, uid))) {
 		reject_job = true;
 		goto send_msg;
 	}
@@ -4138,8 +4145,6 @@ static void _slurm_rpc_submit_batch_pack_job(slurm_msg_t *msg)
 	List job_req_list = (List) msg->data;
 	uid_t uid = g_slurm_auth_get_uid(msg->auth_cred,
 					 slurmctld_config.auth_info);
-	gid_t gid = g_slurm_auth_get_gid(msg->auth_cred,
-					 slurmctld_config.auth_info);
 	char *hostname = g_slurm_auth_get_host(msg->auth_cred,
 					       slurmctld_config.auth_info);
 	uint32_t job_uid = NO_VAL;
@@ -4192,7 +4197,7 @@ static void _slurm_rpc_submit_batch_pack_job(slurm_msg_t *msg)
 			job_uid = job_desc_msg->user_id;
 
 		if ((error_code = _valid_id("REQUEST_SUBMIT_BATCH_JOB",
-					    job_desc_msg, uid, gid))) {
+					    job_desc_msg, uid))) {
 			reject_job = true;
 			break;
 		}
